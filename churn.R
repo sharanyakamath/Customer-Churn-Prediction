@@ -184,6 +184,40 @@ ggplot(
     geom_boxplot()
 , align = "h")
 
+# Decrease graph size from standard
+options(repr.plot.width = 7, repr.plot.height = 3)
+plot_grid(
+    
+data %>%
+    filter(Churn == "Yes") %>%
+    group_by(TotalCharges) %>%
+    summarize(
+        n = n()
+    ) %>%
+    mutate(
+        Percentage = round(n / sum(n), 3)
+    ) %>%
+    # Create plot
+    ggplot(
+        aes(x = TotalCharges, y = Percentage, color = TotalCharges)
+    ) +
+    stat_smooth(method = "lm", col = "red") +
+    geom_point(alpha = 2/3) +
+    # Clean graph visual a bit
+    theme +
+    labs(
+        x = "Total Charges", y = "Churn (%)"
+    ),
+
+data %>%
+    filter(is.na(TotalCharges) == FALSE) %>%
+ggplot(
+    aes(y = TotalCharges, x = Churn, color = Churn)
+    ) +
+    theme +
+    geom_boxplot()
+, align = "h")
+
 # Remove columns we didn't see correlation from above
 data.model <- data %>%
     select(
