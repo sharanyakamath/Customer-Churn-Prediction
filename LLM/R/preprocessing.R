@@ -47,12 +47,15 @@ data <- data %>%
       mutate(PaperlessBilling = ifelse(PaperlessBilling == "Yes",1,0))
 
 data <- data %>%
+      mutate(TotalCharges = ifelse(is.na(TotalCharges),0,TotalCharges))
+
+data <- data %>%
       mutate(PaymentMethod = ifelse(PaymentMethod == "Electronic check",1,
       	ifelse(PaymentMethod == "Mailed check",2,
       		ifelse(PaymentMethod == "Bank transfer (automatic)",3,4))))
 
-data <- data %>%
-      mutate(Churn = ifelse(Churn == "Yes",1,0))
+# data <- data %>%
+#       mutate(Churn = ifelse(Churn == "Yes",1,0))
 
 #remove column id
 cols.dont.want <- "customerID"
