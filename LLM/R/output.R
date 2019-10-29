@@ -1,27 +1,33 @@
 install.packages("LLM")
-install.packages("mlbench")
+# install.packages("mlbench")
 
 library(LLM)
 
-# Test
-if (requireNamespace("mlbench", quietly = TRUE)) {
-  library("mlbench")
-}
+# # Test
+# if (requireNamespace("mlbench", quietly = TRUE)) {
+#   library("mlbench")
+# }
 
-# ## Split in training and test (2/3 - 1/3)
-# idtrain <- c(sample(1:7043,5283))
-# ChurnTrain <-data[idtrain,]
-# ChurnTest <-data[-idtrain,]
+data <- read.csv("preprocessed.csv")
 
-# #number of rows
-# nrow(ChurnTest)
-# nrow(ChurnTrain)
+## Split in training and test (3/4 - 1/4)
+set.seed(123)
+n <- nrow(data)
+idtrain <- sample(n, trunc(0.75*n))
 
-# ## Create the LLM
-# Churn.llm <- llm(X = ChurnTrain[,-c(21)],Y = ChurnTrain$Churn, threshold_pruning = 0.25,nbr_obs_leaf = 100)
+ChurnTrain <-data[idtrain,]
+ChurnTest <-data[-idtrain,]
 
-# ## Use the model on the test dataset to make a prediction
-# PimaPrediction <- predict.llm(object = Pima.llm, X = Pimatest[,-c(9)])
+#number of rows
+nrow(ChurnTest)
+nrow(ChurnTrain)
+
+# print(ChurnTrain[20])
+# Create the LLM
+Churn.llm <- llm(X = ChurnTrain[,-c(20)],Y = ChurnTrain[20], threshold_pruning = 0.25, nbr_obs_leaf = 100)
+
+## Use the model on the test dataset to make a prediction
+# ChurnPrediction <- predict.llm(object = Churn.llm, X = ChurnTest[,-c(9)])
 # ## Optionally add the dependent to calculate performance statistics such as AUC
 # PimaPrediction <- cbind(PimaPrediction, "diabetes" = Pimatest[,"diabetes"])
 
