@@ -35,4 +35,8 @@ Churn.llm <- llm.cv(X = ChurnTrain[,-c(20)],Y = ChurnTrain$Churn, cv=4, threshol
 # Churn.Viz <- table.llm.html(object = Churn.llm, headertext = "This is an example of the LLM model",
 # footertext = "Enjoy the package!")
 # write(Churn.Viz, "Churn.html")
-print(Churn.llm)
+write.csv(Churn.llm$foldpred, file="output/foldpred.csv")
+write.csv(Churn.llm$pred, file="output/pred.csv")
+write.csv(Churn.llm$foldclass, file="output/foldclass.csv")
+write.csv(Churn.llm$class, file="output/class.csv")
+write.csv(Churn.llm$conf, file="output/conf.csv")
