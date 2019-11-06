@@ -25,7 +25,7 @@ AUC <- function (actuals, predictedScores){
     AUC = concordance + 0.5*tiesPercent
     Gini = 2*AUC - 1
     return(list("Concordance"=concordance, "Discordance"=discordance,
-                "Tied"=tiesPercent, "AUC"=AUC, "Gini or Somers D"=Gini))
+                "Tied"=tiesPercent, "Gini or Somers D"=Gini))
 }
 
 
@@ -94,11 +94,11 @@ for(i in 1:nrow(data)){
 
 accuracy = (tp+tn)/(fp+fn+tp+tn)
 
-print(tp)
-print(fn)
-print(fp)
-print(tn)
-print(accuracy)
+cat("\n\nTP : ", tp, "\n")
+cat("FN : ", fn, "\n")
+cat("FP : ", fp, "\n")
+cat("TN : ", tn, "\n")
+cat("Accuracy : ", accuracy, "\n\n\n")
 
 newdata <- read.csv("predictedChurn.csv")
 

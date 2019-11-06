@@ -1,4 +1,4 @@
-install.packages("LLM")
+# install.packages("LLM")
 # install.packages("mlbench")
 
 library(LLM)
@@ -26,7 +26,7 @@ nrow(ChurnTrain)
 # write.csv(ChurnTrain[,"Churn"],"try.csv")
 # Create the LLM
 Churn.llm <- llm(X = ChurnTrain[,-c(20)],Y = ChurnTrain$Churn, threshold_pruning = 0.25, nbr_obs_leaf = 100)
-Churn.llm.cv <- llm.cv(X = ChurnTrain[,-c(20)],Y = ChurnTrain$Churn, cv=4, threshold_pruning = 0.25, nbr_obs_leaf = 100)
+# Churn.llm.cv <- llm.cv(X = ChurnTrain[,-c(20)],Y = ChurnTrain$Churn, cv=4, threshold_pruning = 0.25, nbr_obs_leaf = 100)
 
 ## Use the model on the test dataset to make a prediction
 ChurnPrediction <- predict.llm(object = Churn.llm, X = ChurnTest[,-c(20)])
