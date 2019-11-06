@@ -34,7 +34,7 @@ ChurnPrediction <- predict.llm(object = Churn.llm, X = ChurnTest[,-c(20)])
 # ## Optionally add the dependent to calculate performance statistics such as AUC
 ChurnPrediction <- cbind(ChurnPrediction, "Churn" = ChurnTest[,"Churn"])
 
-Churn.Viz <- table.llm.html(object = Churn.llm, headertext = "This is an example of the LLM model")
+Churn.Viz <- table.llm.html(object = Churn.llm, headertext = "LLM model")
 write(Churn.Viz, "Churn.html")
 # print(ChurnPrediction)
 
