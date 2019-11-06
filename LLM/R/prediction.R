@@ -3,7 +3,25 @@
 # install.packages('pROC')
 library(party)
 library(pROC)
+library(zoo)
 
+
+AUC <- function (actuals, predictedScores){
+    fitted <- data.frame (Actuals=actuals, PredictedScores=predictedScores)
+    colnames(fitted) <- c('Actuals','PredictedScores')
+    ones <- fitted[fitted$Actuals==1, ] # Subset ones
+    zeros <- fitted[fitted$Actuals==0, ] # Subsetzeros
+    totalPairs <- nrow (ones) * nrow (zeros) # calculate total number of pairs to check
+    conc <- sum (c(vapply(ones$PredictedScores, function(x) {((x > zeros$PredictedScores))}, FUN.VALUE=logical(nrow(zeros)))), na.rm=T)
+    disc <- sum(c(vapply(ones$PredictedScores, function(x) {((x < zeros$PredictedScores))}, FUN.VALUE = logical(nrow(zeros)))), na.rm = T)
+    concordance <- conc/totalPairs
+    discordance <- disc/totalPairs
+    tiesPercent <- (1-concordance-discordance)
+    AUC = concordance + 0.5*tiesPercent
+    Gini = 2*AUC - 1
+    return(list("Concordance"=concordance, "Discordance"=discordance,
+                "Tied"=tiesPercent, "AUC"=AUC, "Gini or Somers D"=Gini))
+}
 
 calculate_roc <- function(df, cost_of_fp, cost_of_fn, n=100) {
   tpr <- function(df, threshold) {
@@ -59,8 +77,6 @@ plot_roc <- function(roc, threshold, cost_of_fp, cost_of_fn) {
 }
 
 
-
-
 data <- read.csv("ChurnPrediction.csv")
 
 data$predictedChurn 
@@ -68,13 +84,20 @@ data$predictedChurn
 for(i in 1:nrow(data)){
 	churn = data[i,"Churn"]
 	prob = data[i,"probability"]
+
+  if(churn %in% c("Yes")) {
+    data[i,"ChurnBool"] = 1
+  }
+  if(churn %in% c("No")) {
+    data[i,"ChurnBool"] = 0
+  }
+
 	if(as.numeric(prob) < 0.5) {
-		data[i,"predictedChurn"] = "No"
+		data[i,"predictedChurn"] = 0
 	}
 	else {
-		data[i,"predictedChurn"] = "Yes"
+		data[i,"predictedChurn"] = 1
 	}
-	# data[i,] <- row
 }
 
 write.csv(data, file="predictedChurn.csv")
@@ -85,18 +108,31 @@ fp <- 0
 tn <- 0
 
 for(i in 1:nrow(data)){
-	if(data[i,"predictedChurn"] == "Yes" && data[i,"Churn"] == "Yes") {
-		tp <- tp + 1
-	}
-	if(data[i,"predictedChurn"] == "Yes" && data[i,"Churn"] == "No") {
-		fn <- fn + 1
-	}
-	if(data[i,"predictedChurn"] == "No" && data[i,"Churn"] == "Yes") {
-		fp <- fp + 1
-	}
-	if(data[i,"predictedChurn"] == "No" && data[i,"Churn"] == "No") {
-		tn <- tn + 1
-	}
+	# if(data[i,"predictedChurn"] == "Yes" && data[i,"Churn"] == "Yes") {
+	# 	tp <- tp + 1
+	# }
+	# if(data[i,"predictedChurn"] == "Yes" && data[i,"Churn"] == "No") {
+	# 	fn <- fn + 1
+	# }
+	# if(data[i,"predictedChurn"] == "No" && data[i,"Churn"] == "Yes") {
+	# 	fp <- fp + 1
+	# }
+	# if(data[i,"predictedChurn"] == "No" && data[i,"Churn"] == "No") {
+	# 	tn <- tn + 1
+	# }
+
+  if(data[i,"predictedChurn"] == 1 && data[i,"ChurnBool"] == 1) {
+    tp <- tp + 1
+  }
+  if(data[i,"predictedChurn"] == 1 && data[i,"ChurnBool"] == 0) {
+    fn <- fn + 1
+  }
+  if(data[i,"predictedChurn"] == 0 && data[i,"ChurnBool"] == 1) {
+    fp <- fp + 1
+  }
+  if(data[i,"predictedChurn"] == 0 && data[i,"ChurnBool"] == 0) {
+    tn <- tn + 1
+  }
 }
 
 accuracy = (tp+tn)/(fp+fn+tp+tn)
@@ -107,5 +143,6 @@ print(fp)
 print(tn)
 print(accuracy)
 
-roc <- calculate_roc(data, 1, 2, n = 100)
-plot_roc(roc, 0.5, 1, 2)
+newdata <- read.csv("predictedChurn.csv")
+
+AUC(newdata$ChurnBool, newdata$predictedChurn)
