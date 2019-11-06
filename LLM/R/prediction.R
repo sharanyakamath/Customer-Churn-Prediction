@@ -108,7 +108,7 @@ AUC(newdata$ChurnBool, newdata$predictedChurn)
 # auc.roc.plot (validate_data)
 
 #----------------------------------
-pROC_obj <- roc(validate_data$ChurnBool,validate_data$probability,
+pROC_obj <- roc(newdata$ChurnBool,newdata$predictedChurn,
             smoothed = TRUE,
             # arguments for ci
             ci=TRUE, ci.alpha=0.9, stratified=FALSE,
