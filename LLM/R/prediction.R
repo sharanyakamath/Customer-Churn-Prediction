@@ -1,9 +1,14 @@
 # install.packages('gridExtra')
 # install.packages('party')
 # install.packages('pROC')
+# install.packages("precrec")
+# install.packages('autoplot')
+# install.packages("ggfortify")
+
 library(party)
 library(pROC)
 library(zoo)
+library(ggplot2)
 
 
 AUC <- function (actuals, predictedScores){
@@ -20,64 +25,14 @@ AUC <- function (actuals, predictedScores){
     AUC = concordance + 0.5*tiesPercent
     Gini = 2*AUC - 1
     return(list("Concordance"=concordance, "Discordance"=discordance,
-                "Tied"=tiesPercent, "AUC"=AUC, "Gini or Somers D"=Gini))
+                "Tied"=tiesPercent, "Gini or Somers D"=Gini))
 }
 
-calculate_roc <- function(df, cost_of_fp, cost_of_fn, n=100) {
-  tpr <- function(df, threshold) {
-    sum(df$predictedChurn >= threshold & df$Churn == "Yes") / sum(df$Churn == "Yes")
-  }
-  
-  fpr <- function(df, threshold) {
-    sum(df$predictedChurn >= threshold & df$Churn == "No") / sum(df$Churn == "No")
-  }
-  
-  cost <- function(df, threshold, cost_of_fp, cost_of_fn) {
-    sum(df$predictedChurn >= threshold & df$Churn == "No") * cost_of_fp + 
-      sum(df$predictedChurn < threshold & df$Churn == "Yes") * cost_of_fn
-  }
-  
-  roc <- data.frame(threshold = seq(0,1,by=0.1), tpr=NA, fpr=NA)
-  roc$tpr <- sapply(roc$threshold, function(th) tpr(df, th))
-  roc$fpr <- sapply(roc$threshold, function(th) fpr(df, th))
-  roc$cost <- sapply(roc$threshold, function(th) cost(df, th, cost_of_fp, cost_of_fn))
-  
-  print(roc)
-  return(roc)
-}
 
-plot_roc <- function(roc, threshold, cost_of_fp, cost_of_fn) {
-  library(gridExtra)
-  library(ggplot2)
-
-  norm_vec <- function(v) (v - min(v))/diff(range(v))
-  
-  idx_threshold = which.min(abs(roc$threshold-threshold))
-  
-  col_ramp <- colorRampPalette(c("green","orange","red","black"))(100)
-  col_by_cost <- col_ramp[ceiling(norm_vec(roc$cost)*99)+1]
-  p_roc <- ggplot(roc, aes(fpr,tpr)) + 
-    geom_line(color=rgb(0,0,1,alpha=0.3)) +
-    geom_point(color=col_by_cost, size=4, alpha=0.5) +
-    coord_fixed() +
-    geom_line(aes(threshold,threshold), color=rgb(0,0,1,alpha=0.5)) +
-    labs(title = sprintf("ROC")) + xlab("FPR") + ylab("TPR") +
-    geom_hline(yintercept=roc[idx_threshold,"tpr"], alpha=0.5, linetype="dashed") +
-    geom_vline(xintercept=roc[idx_threshold,"fpr"], alpha=0.5, linetype="dashed")
-  
-  p_cost <- ggplot(roc, aes(threshold, cost)) +
-    geom_line(color=rgb(0,0,1,alpha=0.3)) +
-    geom_point(color=col_by_cost, size=4, alpha=0.5) +
-    labs(title = sprintf("cost function")) +
-    geom_vline(xintercept=threshold, alpha=0.5, linetype="dashed")
-  
-  sub_title <- sprintf("threshold at %.2f - cost of FP = %d, cost of FN = %d", threshold, cost_of_fp, cost_of_fn)
-
-  grid.arrange(p_roc, p_cost, ncol=2, sub=textGrob(sub_title, gp=gpar(cex=1), just="bottom"))
-}
 
 
 data <- read.csv("ChurnPrediction.csv")
+
 
 data$predictedChurn 
 
@@ -101,6 +56,8 @@ for(i in 1:nrow(data)){
 }
 
 write.csv(data, file="predictedChurn.csv")
+write.csv(data[,c("ChurnBool", "probability")], file="validate.csv")
+validate_data <- read.csv("validate.csv")
 
 tp <- 0
 fn <- 0
@@ -137,12 +94,38 @@ for(i in 1:nrow(data)){
 
 accuracy = (tp+tn)/(fp+fn+tp+tn)
 
-print(tp)
-print(fn)
-print(fp)
-print(tn)
-print(accuracy)
+cat("\n\nTP : ", tp, "\n")
+cat("FN : ", fn, "\n")
+cat("FP : ", fp, "\n")
+cat("TN : ", tn, "\n")
+cat("Accuracy : ", accuracy, "\n\n\n")
 
 newdata <- read.csv("predictedChurn.csv")
 
 AUC(newdata$ChurnBool, newdata$predictedChurn)
+
+# roc.plot(newdata$ChurnBool, newdata$predictedChurn, thresholds = NULL)
+# auc.roc.plot (validate_data)
+
+#----------------------------------
+pROC_obj <- roc(newdata$ChurnBool,newdata$predictedChurn,
+            smoothed = TRUE,
+            # arguments for ci
+            ci=TRUE, ci.alpha=0.9, stratified=FALSE,
+            # arguments for plot
+            plot=TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, grid=TRUE,
+            print.auc=TRUE, show.thres=TRUE)
+
+sens.ci <- ci.se(pROC_obj)
+plot(sens.ci, type="shape", col="lightblue")
+plot(sens.ci, type="bars")
+#------------------------
+# library(precrec)
+# precrec_obj2 <- evalmod(scores = validate_data$probability, labels = validate_data$ChurnBool, mode="basic")
+# autoplot(precrec_obj2)  
+
+#-----------------------
+# install.packages("plotROC")
+# library(plotROC)
+# rocplot <- ggplot(validate_data, aes(m = validate_data$probability, d = validate_data$ChurnBool))+ geom_roc(n.cuts=20,labels=FALSE)
+# rocplot + style_roc(theme = theme_grey) + geom_rocci(fill="pink")

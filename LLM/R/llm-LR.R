@@ -187,7 +187,7 @@ llm <- function(X,Y,threshold_pruning=0.25 , nbr_obs_leaf=100) {
     # build a glm model on the training data
     LR <- stats::glm(y_sel ~ ., data=train_ss[,1:(ncol(basetabadc150392)-1)], family=stats::binomial("logit"))
     LR1 <- stats::glm(y_sel ~ 1, data=train_ss[,1:(ncol(basetabadc150392)-1)], family=stats::binomial("logit"))
-
+  
     # stepwise variable selection
     listythelist[[l]] <- stats::step(LR1,direction="forward" ,scope = list(lower= LR1, upper = LR), trace = 0)
 
@@ -200,15 +200,15 @@ llm <- function(X,Y,threshold_pruning=0.25 , nbr_obs_leaf=100) {
   return(myreturn)
 }
 
-# Test
-if (requireNamespace("mlbench", quietly = TRUE)) {
-  library("mlbench")
-}
-data("PimaIndiansDiabetes")
-## Split in training and test (2/3 - 1/3)
-idtrain <- c(sample(1:768,512))
-PimaTrain <-PimaIndiansDiabetes[idtrain,]
-Pimatest <-PimaIndiansDiabetes[-idtrain,]
-## Create the LLM
-Pima.llm <- llm(X = PimaTrain[,-c(9)],Y = PimaTrain$diabetes,
-threshold_pruning = 0.25,nbr_obs_leaf = 100)
+# # Test
+# if (requireNamespace("mlbench", quietly = TRUE)) {
+#   library("mlbench")
+# }
+# data("PimaIndiansDiabetes")
+# ## Split in training and test (2/3 - 1/3)
+# idtrain <- c(sample(1:768,512))
+# PimaTrain <-PimaIndiansDiabetes[idtrain,]
+# Pimatest <-PimaIndiansDiabetes[-idtrain,]
+# ## Create the LLM
+# Pima.llm <- llm(X = PimaTrain[,-c(9)],Y = PimaTrain$diabetes,
+# threshold_pruning = 0.25,nbr_obs_leaf = 100)
